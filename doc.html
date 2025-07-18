@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Slot Machine</title>
+    <style>
+        :root {
+            --primary-color: #e53935;
+            --secondary-color: #1565c0;
+            --background-dark: #121212;
+            --background-light: #1e1e1e;
+            --text-light: #ffffff;
+            --text-dim: #bdbdbd;
+            --accent-gold: #ffd700;
+            --win-color: #4caf50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .slot-machine {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            background-color: var(--background-light);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 5px solid #333;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--accent-gold);
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+
+        .balance, .bet-amount {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+
+        .balance span, .bet-amount span {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+
+        .slot {
+            width: 120px;
+            height: 120px;
+            margin: 0 10px;
+            background-color: white;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .slot img {
+            width: 80px;
+            height: auto;
+            transition: transform 0.1s;
+        }
+
+        .slot-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .spin-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .spin-btn:hover {
+            background-color: #c62828;
+            transform: translateY(-2px);
+        }
+
+        .spin-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .bet-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .bet-btn {
+            padding: 10px 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .win-message {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            color: var(--win-color);
+            height: 30px;
+            text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        .spinning {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0) }
+            25% { transform: translateX(-2px) }
+            50% { transform: translateX(2px) }
+            75% { transform: translateX(-2px) }
+            100% { transform: translateX(0) }
+        }
+
+        .jackpot {
+            animation: jackpot 0.5s infinite alternate;
+        }
+
+        @keyframes jackpot {
+            0% { color: var(--win-color); transform: scale(1); }
+            100% { color: var(--accent-gold); transform: scale(1.1); }
+        }
+
+        @media (max-width: 600px) {
+            .slot-machine {
+                width: 95%;
+                padding: 20px 10px;
+            }
+
+            .slot {
+                width: 80px;
+                height: 80px;
+                margin: 0 5px;
+            }
+
+            .slot img {
+                width: 60px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slot-machine">
+        <div class="header">
+            <h1 class="title">Lucky Slots</h1>
+        </div>
+
+        <div class="stats">
+            <div class="balance">Balance: <span id="balance">100</span>¢</div>
+            <div class="bet-amount">Bet: <span id="current-bet">5</span>¢</div>
+        </div>
+
+        <div class="slots-container">
+            <div class="slot" id="slot1">
+                <img src="https://placehold.co/80/7B1FA2/FFFFFF?text=Cherry" alt="Cherry symbol for slot machine" id="symbol1">
+                <div class="slot-shadow"></div>
+            </div>
+            <div class="slot" id="slot2">
+                <img src="https://placehold.co/80/7B1FA2/FFFFFF?text=Lemon" alt="Lemon symbol for slot machine" id="symbol2">
+                <div class="slot-shadow"></div>
+            </div>
+            <div class="slot" id="slot3">
+                <img src="https://placehold.co/80/7B1FA2/FFFFFF?text=Orange" alt="Orange symbol for slot machine" id="symbol3">
+                <div class="slot-shadow"></div>
+            </div>
+        </div>
+
+        <div class="win-message" id="win-message"></div>
+
+        <div class="controls">
+            <div class="bet-controls">
+                <button class="bet-btn" data-bet="1">Bet 1¢</button>
+                <button class="bet-btn" data-bet="5">Bet 5¢</button>
+                <button class="bet-btn" data-bet="10">Bet 10¢</button>
+                <button class="bet-btn" data-bet="25">Bet 25¢</button>
+            </div>
+            <button class="spin-btn" id="spin-btn">Spin</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game configuration
+            const symbols = [
+                { name: 'Cherry', value: 2, weight: 20, image: 'https://placehold.co/80/7B1FA2/FFFFFF?text=Cherry' },
+                { name: 'Lemon', value: 5, weight: 15, image: 'https://placehold.co/80/FDD835/000000?text=Lemon' },
+                { name: 'Orange', value: 10, weight: 10, image: 'https://placehold.co/80/F57C00/FFFFFF?text=Orange' },
+                { name: 'Plum', value: 15, weight: 8, image: 'https://placehold.co/80/7B1FA2/FFFFFF?text=Plum' },
+                { name: 'Bell', value: 20, weight: 5, image: 'https://placehold.co/80/FFC107/000000?text=Bell' },
+                { name: 'Bar', value: 50, weight: 2, image: 'https://placehold.co/80/4CAF50/FFFFFF?text=Bar' },
+                { name: 'Seven', value: 100, weight: 1, image: 'https://placehold.co/80/E53935/FFFFFF?text=Seven' }
+            ];
+
+            // Game state
+            let balance = 100;
+            let currentBet = 5;
+            let isSpinning = false;
+
+            // DOM elements
+            const balanceEl = document.getElementById('balance');
+            const currentBetEl = document.getElementById('current-bet');
+            const spinBtn = document.getElementById('spin-btn');
+            const winMessageEl = document.getElementById('win-message');
+            const symbol1El = document.getElementById('symbol1');
+            const symbol2El = document.getElementById('symbol2');
+            const symbol3El = document.getElementById('symbol3');
+            const betButtons = document.querySelectorAll('.bet-btn');
+            const slot1 = document.getElementById('slot1');
+            const slot2 = document.getElementById('slot2');
+            const slot3 = document.getElementById('slot3');
+
+            // Update displays
+            function updateDisplays() {
+                balanceEl.textContent = balance;
+                currentBetEl.textContent = currentBet;
+                spinBtn.disabled = isSpinning || balance < currentBet;
+            }
+
+            // Weighted random symbol selection
+            function getRandomSymbol() {
+                const totalWeight = symbols.reduce((sum, symbol) => sum + symbol.weight, 0);
+                let random = Math.floor(Math.random() * totalWeight);
+                let currentSum = 0;
+
+                for (const symbol of symbols) {
+                    currentSum += symbol.weight;
+                    if (random < currentSum) {
+                        return symbol;
+                    }
+                }
+            }
+
+            // Calculate winnings
+            function calculateWin(slotResults) {
+                const firstSymbol = slotResults[0].name;
+                
+                if (slotResults.every(symbol => symbol.name === firstSymbol)) {
+                    // All three match - jackpot!
+                    return 10 * slotResults[0].value * currentBet;
+                } else if (slotResults[0].name === slotResults[1].name || 
+                          slotResults[1].name === slotResults[2].name) {
+                    // Two match
+                    return 2 * slotResults[1].value * currentBet;
+                } else if (slotResults[0].name === slotResults[2].name) {
+                    // First and last match
+                    return 2 * slotResults[0].value * currentBet;
+                }
+                
+                return 0;
+            }
+
+            // Animation for spinning
+            async function animateSpin(slotElement, resultSymbol) {
+                return new Promise(resolve => {
+                    let spins = 0;
+                    const maxSpins = 10 + Math.floor(Math.random() * 5);
+                    const spinInterval = setInterval(() => {
+                        spins++;
+                        const tempSymbol = getRandomSymbol();
+                        slotElement.querySelector('img').src = tempSymbol.image;
+                        slotElement.querySelector('img').alt = `${tempSymbol.name} symbol for slot machine`;
+
+                        if (spins >= maxSpins) {
+                            clearInterval(spinInterval);
+                            slotElement.querySelector('img').src = resultSymbol.image;
+                            slotElement.querySelector('img').alt = `${resultSymbol.name} symbol for slot machine`;
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
+            // Main spin function
+            async function spin() {
+                if (isSpinning || balance < currentBet) return;
+
+                isSpinning = true;
+                winMessageEl.textContent = '';
+                updateDisplays();
+
+                // Visual feedback for spinning
+                slot1.classList.add('spinning');
+                slot2.classList.add('spinning');
+                slot3.classList.add('spinning');
+
+                // Get results
+                const slotResults = [
+                    getRandomSymbol(),
+                    getRandomSymbol(),
+                    getRandomSymbol()
+                ];
+
+                // Animate each slot with delays between them
+                await animateSpin(slot1, slotResults[0]);
+                await new Promise(resolve => setTimeout(resolve, 200));
+                await animateSpin(slot2, slotResults[1]);
+                await new Promise(resolve => setTimeout(resolve, 200));
+                await animateSpin(slot3, slotResults[2]);
+
+                // Stop spinning animation
+                slot1.classList.remove('spinning');
+                slot2.classList.remove('spinning');
+                slot3.classList.remove('spinning');
+
+                // Calculate win
+                const winnings = calculateWin(slotResults);
+                balance += winnings - currentBet;
+
+                // Display results
+                if (winnings > 0) {
+                    winMessageEl.textContent = `You won ${winnings}¢!`;
+                    winMessageEl.classList.add('jackpot');
+                    setTimeout(() => {
+                        winMessageEl.classList.remove('jackpot');
+                    }, 2000);
+                } else {
+                    winMessageEl.textContent = "No win this time";
+                }
+
+                isSpinning = false;
+                updateDisplays();
+            }
+
+            // Event Listeners
+            spinBtn.addEventListener('click', spin);
+            
+            betButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const betAmount = parseInt(button.dataset.bet);
+                    currentBet = betAmount;
+                    updateDisplays();
+                });
+            });
+
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ' && !isSpinning && balance >= currentBet) {
+                    spin();
+                } else if (e.key >= '1' && e.key <= '9' && !isSpinning) {
+                    const betAmount = parseInt(e.key);
+                    if ([1, 5, 10, 25].includes(betAmount)) {
+                        currentBet = betAmount;
+                        updateDisplays();
+                    }
+                }
+            });
+
+            // Initial update
+            updateDisplays();
+        });
+    </script>
+</body>
+</html>
